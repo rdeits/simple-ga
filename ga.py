@@ -3,6 +3,10 @@ from __future__ import division
 import numpy as np
 import random
 
+"""
+This file implements a basic genetic algorithm optimizer for an arbitrary function (called a fitness function here) which you would like to minimize. 
+"""
+
 class FitnessFunction:
     def __init__(self,function,num_vars,lb=None,ub=None):
         # function should take a vector of length num_vars
