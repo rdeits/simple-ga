@@ -8,9 +8,9 @@ This file implements a basic genetic algorithm optimizer for an arbitrary functi
 """
 
 class FitnessFunction:
-    def __init__(self,function,num_vars,lb=None,ub=None):
+    def __init__(self,obj_fun,num_vars,lb=None,ub=None):
         # function should take a vector of length num_vars
-        self.function = function
+        self.obj_fun = obj_fun
         self.num_vars = num_vars
         if lb is None:
             self.lb = [0 for i in range(num_vars)]
@@ -24,7 +24,7 @@ class FitnessFunction:
         assert len(x) == self.num_vars, "len(x) != num_vars"
         assert [x[i] > self.lb[i] for i in range(self.num_vars)], "x below lb"
         assert [x[i] < self.ub[i] for i in range(self.num_vars)], "x above ub"
-        return self.function(x)
+        return self.obj_fun(x)
     def plot_estimate(self,x):
         pass
 
