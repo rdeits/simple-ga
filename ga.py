@@ -4,11 +4,13 @@ import numpy as np
 import random
 
 """
-This file implements a basic genetic algorithm optimizer for an arbitrary function (called a fitness function here) which you would like to minimize. 
+This file implements a basic genetic algorithm optimizer for an arbitrary
+ function (called a fitness function here) which you would like to minimize.
 """
 
+
 class FitnessFunction:
-    def __init__(self,obj_fun,num_vars,lb=None,ub=None):
+    def __init__(self, obj_fun, num_vars, lb=None, ub=None):
         # function should take a vector of length num_vars
         self.obj_fun = obj_fun
         self.num_vars = num_vars
@@ -20,13 +22,16 @@ class FitnessFunction:
             self.ub = [1 for i in range(num_vars)]
         else:
             self.ub = ub
-    def __call__(self,x):
+
+    def __call__(self, x):
         assert len(x) == self.num_vars, "len(x) != num_vars"
         assert [x[i] > self.lb[i] for i in range(self.num_vars)], "x below lb"
         assert [x[i] < self.ub[i] for i in range(self.num_vars)], "x above ub"
         return self.obj_fun(x)
-    def plot_estimate(self,x):
+
+    def plot_estimate(self, x):
         pass
+
 
 class GA:
     """A genetic algorithm class. The only required argument is a fitness
@@ -44,15 +49,16 @@ class GA:
     stall_generations (int): number of generations over which less than 5% improvement in best fitness will be considered a stall (at which point the algorithm will stop)
     verbose (bool): print additional debugging information
     """
-    def __init__(self,fitness_function,
-            pop_size = 12,
-            keep_fraction = .5,
-            mut_rate = 0.1,
-            elite_count = 1,
-            max_generations = 1000,
-            min_fitness = 0,
-            stall_generations = 10,
-            verbose = False):
+
+    def __init__(self, fitness_function,
+            pop_size=12,
+            keep_fraction=.5,
+            mut_rate=0.1,
+            elite_count=1,
+            max_generations=1000,
+            min_fitness=0,
+            stall_generations=10,
+            verbose=False):
         self.fitness_function = fitness_function
         self.pop_size = pop_size
         self.keep_fraction = keep_fraction
@@ -72,11 +78,11 @@ class GA:
 
         self.create_population(self.pop_size)
 
-    def create_population(self,size):
+    def create_population(self, size):
         """Initialize the population with new individuals.
-        The generation of a new (presumably random) individual is handled by the 
-        Individual class."""
-        individuals = [Individual(self.fitness_function,None)\
+        The generation of a new (presumably random) individual is handled
+        by the Individual class."""
+        individuals = [Individual(self.fitness_function, None)\
                 for i in range(size)]
         if self.verbose:
             print "Ceated initial pop."
@@ -90,9 +96,10 @@ class GA:
 
     def evaluate(self):
         """Evaluate each individual's fitness function"""
-        # This is actually unnecessary. Because of the way Individual.fitness is set
-        # up as a Python property, the call to self.sort() will actually call the 
-        # fitness function as necessary. This is just done to be more explicit and clear.
+        # This is actually unnecessary. Because of the way Individual.fitness
+        # is set up as a Python property, the call to self.sort() will
+        # actually call the fitness function as necessary. This is just done
+        # to be more explicit and clear.
         for indiv in self.individuals:
             indiv.evaluate()
 
@@ -101,7 +108,7 @@ class GA:
         if self.verbose:
             print "stepping"
         self.evaluate()
-        self.sort() 
+        self.sort()
         # After sorting, self.individuals[0] is the most fit individual
         self.best_fitnesses.append(self.individuals[0].fitness)
         if self.verbose:
@@ -109,7 +116,7 @@ class GA:
         if self.done():
             # self.report()
             return True
-        self.cull() # kill off the unfit individuals
+        self.cull()  # kill off the unfit individuals
         self.reproduce()
         self.mutate_all()
         self.generation += 1
@@ -117,10 +124,10 @@ class GA:
 
     def print_status(self):
         print "=================================="
-        print "Generation",self.generation,"run. Sorted individuals:"
+        print "Generation", self.generation, "run. Sorted individuals:"
         for indiv in self.individuals:
             print "Genotype:", indiv.genotype
-            print "Fitness:", indiv.fitness,"\n"
+            print "Fitness:", indiv.fitness, "\n"
 
     def run(self):
         try:
