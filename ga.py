@@ -2,6 +2,7 @@ from __future__ import division
 
 import numpy as np
 import random
+import json
 
 """
 This file implements a basic genetic algorithm optimizer for an arbitrary
@@ -39,7 +40,7 @@ class FitnessFunction:
         pass
 
 
-class GA:
+class GA(object):
     """A genetic algorithm class. The only required argument is a fitness
     function, which takes the form of a FitnessFunction object here. That
     object must have fields lb, ub, and num_vars and a __call__ method which
@@ -56,6 +57,11 @@ class GA:
     verbose (bool): print additional debugging information
     """
 
+    @staticmethod
+    def load(fitness_function, fname='ga_state.json'):
+        loaded_data = json.load(open(fname, 'r'))
+        return GA(fitness_function, **loaded_data)
+
     def __init__(self, fitness_function,
             pop_size=12,
             keep_fraction=.5,
@@ -64,7 +70,9 @@ class GA:
             max_generations=1000,
             min_fitness=0,
             stall_generations=10,
-            verbose=False):
+            verbose=False,
+            history=[],
+            save_state=False):
         self.fitness_function = fitness_function
         self.pop_size = pop_size
         self.keep_fraction = keep_fraction
@@ -73,16 +81,27 @@ class GA:
         self.max_generations = max_generations
         self.min_fitness = min_fitness
         self.stall_generations = stall_generations
-        self.generation = 0
-        self.best_fitnesses = []
         self.keep_num = int(self.keep_fraction * pop_size)
         self.verbose = verbose
-
         self.lb = self.fitness_function.lb
         self.ub = self.fitness_function.ub
         self.num_vars = self.fitness_function.num_vars
 
-        self.create_population(self.pop_size)
+        ### Load the state from a previous run, if given ###
+        self.history = history
+        self.generation = len(history)
+        self.best_fitnesses = map(lambda x: min(y['fitness'] for y in x),
+                                  history)
+        if self.history != []:
+            self.individuals = [Individual(self.fitness_function,
+                                           indv['genotype'],
+                                           indv['fitness'])\
+                                for indv in history[-1]]
+            self.update_population()
+        else:
+            self.create_population(self.pop_size)
+
+        self.save_state = save_state
 
     def create_population(self, size):
         """Initialize the population with new individuals.
@@ -93,6 +112,14 @@ class GA:
         if self.verbose:
             print "Ceated initial pop."
             print self.individuals
+
+    def save(self, fname='ga_state.json'):
+        vars_to_save = ['pop_size', 'keep_fraction', 'mut_rate',
+                        'elite_count', 'max_generations', 'min_fitness',
+                        'stall_generations', 'verbose', 'history',
+                        'save_state']
+        data_to_save = {x: self.__dict__[x] for x in vars_to_save}
+        json.dump(data_to_save, open(fname, 'w'), indent=2, sort_keys=True)
 
     def sort(self):
         """Sort the population"""
@@ -113,18 +140,26 @@ class GA:
             print "stepping"
         self.evaluate()
         self.sort()
+        self.history.append([{'genotype': indiv.genotype,
+                                          'fitness': indiv.fitness} for
+                                         indiv in self.individuals])
         # After sorting, self.individuals[0] is the most fit individual
         self.best_fitnesses.append(self.individuals[0].fitness)
         if self.verbose:
             self.print_status()
+        if self.save_state:
+            self.save()
         if self.done():
             self.report()
             return True
-        self.cull()  # kill off the unfit individuals
-        self.reproduce()
-        self.mutate_all()
+        self.update_population()
         self.generation += 1
         return False
+
+    def update_population(self):
+        self.cull()
+        self.reproduce()
+        self.mutate_all()
 
     def print_status(self):
         print "=================================="
@@ -141,7 +176,7 @@ class GA:
             # Exit gracefully on ^c
             pass
         self.sort()
-        return self.individuals[0].fitness, self.individuals[0].genotype
+        return self.individuals[0].fitness, self.individuals[0].genotype, self.history
 
     def done(self):
         return (self.generation >= self.max_generations or
@@ -243,13 +278,16 @@ class Individual(object):
     contains two public fields:
     self.genotype is a numpy array of the continuous values which that  individual passes to the objective function
     self.fitness is the numerical fitness score for that individual as  returned by the objective function"""
-    def __init__(self, fitness_function, genotype=None):
+    def __init__(self, fitness_function, genotype=None, fitness=None):
         if genotype is None:
             self.genotype = [(random.random() * (fitness_function.ub[i] -
                 fitness_function.lb[i]) + fitness_function.lb[i])\
                         for i in range(fitness_function.num_vars)]
         else:
             self.genotype = genotype
+        if fitness is not None:
+            self._dirty = False
+            self._fitness = fitness
         self.fitness_function = fitness_function
 
     @property
@@ -260,7 +298,7 @@ class Individual(object):
     def genotype(self, value):
         self._genotype = value
         self._dirty = True
-        self._fitness = 1e308
+        self._fitness = np.inf
 
     @property
     def fitness(self):
@@ -273,7 +311,12 @@ class Individual(object):
             self._dirty = False
 
 if __name__ == '__main__':
-    func = FitnessFunction(lambda x: np.sum(np.power(x, 2)),
-                           4, [-10] * 4, [10] * 4)
-    ga = GA(fitness_function=func)
-    fitness, genotype = ga.run()
+    func = FitnessFunction(obj_fun=lambda x: np.sum(np.power(x, 2)),
+                           num_vars=4,
+                           lb=[-10] * 4,
+                           ub=[10] * 4)
+    ga = GA(fitness_function=func,
+            stall_generations=10,
+            save_state=True)
+    fitness, genotype, history = ga.run()
+    print map(lambda x: min(y['fitness'] for y in x), history)
