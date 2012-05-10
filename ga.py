@@ -101,6 +101,7 @@ class GA(object):
         else:
             self.create_population(self.pop_size)
 
+        # TODO: save_state could hold the filename, with None indicating no saving
         self.save_state = save_state
 
     def create_population(self, size):

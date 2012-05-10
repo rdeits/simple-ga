@@ -17,6 +17,9 @@ class TestCase(unittest.TestCase):
         self.assertAlmostEqual(fitness, 12.09820438854528, places=7)
 
     def test_save_load(self):
+        """
+        Test that saving and loading a GA produces the same result we would have gotten by running it normally.
+        """
         random.seed(0)
         func = FitnessFunction(obj_fun=lambda x: np.sum(np.power(x, 2)),
                                num_vars=4,
