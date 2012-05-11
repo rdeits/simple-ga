@@ -6,6 +6,9 @@ import numpy as np
 
 class TestCase(unittest.TestCase):
     def test_ga(self):
+        """
+        Test against a known result. Significant changes to the way GA works will break this test.
+        """
         random.seed(0)
         func = FitnessFunction(obj_fun=lambda x: np.sum(np.power(x, 2)),
                                num_vars=4,
