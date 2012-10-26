@@ -3,6 +3,12 @@ import unittest
 import random
 import numpy as np
 
+"""
+Unit tests for the GA. Run with:
+    python -m unittest test_ga
+from the shell.
+"""
+
 
 class TestCase(unittest.TestCase):
     def test_ga(self):
